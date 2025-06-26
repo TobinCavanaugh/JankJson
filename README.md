@@ -4,12 +4,9 @@ A lightweight, intuitive JSON manipulation library for C# that prioritizes simpl
 
 ## Features
 
-- **Intuitive Indexing**: Access nested JSON properties using familiar array and object syntax
 - **Type-Safe Conversions**: Built-in type casting with helpful error messages
 - **Flexible Querying**: Navigate JSON structures with path-based lookups
 - **LINQ Integration**: Full enumeration support for arrays and objects
-- **Recursive Operations**: Powerful traversal and transformation methods
-- **Zero Configuration**: Works out of the box with sensible defaults
 
 ## Quick Start
 
