@@ -1,21 +1,31 @@
+using System.Diagnostics;
+
 namespace parseJson;
+
+public struct JParserSettings {
+    public bool AllowTrailingCommas = false;
+    public bool AssignRawContent = true;
+    public bool AssignParents = true;
+    public bool MeasureParseTime = true;
+    public JParserSettings() { }
+
+    public override string ToString() {
+        return
+            $"{nameof(AllowTrailingCommas)}:{AllowTrailingCommas}, {nameof(AssignRawContent)}:{AssignRawContent}, {nameof(AssignParents)}:{AssignParents}, {nameof(MeasureParseTime)}:{MeasureParseTime}";
+    }
+}
 
 public class JParser {
     private readonly List<JToken> _tokens;
     private int _position = 0;
-    private Settings _settings;
+    public readonly JParserSettings Settings;
 
-    public JParser(List<JToken> tokens, Settings? settings = null) {
+    public JParser(List<JToken> tokens, JParserSettings? settings = null) {
         _tokens = tokens;
-        if (settings == null) settings = new();
-        else this._settings = settings.Value;
-    }
+        if (settings == null) this.Settings = new();
+        else this.Settings = settings.Value;
 
-    public struct Settings {
-        public bool AllowTrailingCommas = false;
-        public bool AssignRawContent = true;
-        public bool AssignParents = true;
-        public Settings() { }
+        Console.WriteLine(settings.ToString());
     }
 
     private JToken? Current => _position < _tokens.Count ? _tokens[_position] : null;
@@ -55,14 +65,22 @@ public class JParser {
         }
     }
 
+    public Stopwatch Stopwatch = new();
+
     // The function to call to parse your json
     public JValue Parse() {
+        if (Settings.MeasureParseTime) {
+            Stopwatch.Reset();
+            Stopwatch.Start();
+        }
+
         var result = ParseValue();
         if (_position < _tokens.Count) {
             throw new Exception($"Parsing did not complete: {Current} {Current?.Pos()}");
         }
 
-        if (_settings.AssignParents) ResolveParentHood(result);
+        if (Settings.AssignParents) ResolveParentHood(result);
+        if (Settings.MeasureParseTime) Stopwatch?.Stop();
 
         return result;
     }
@@ -81,17 +99,17 @@ public class JParser {
             case JTokenType.Word:
                 var wordToken = ConsumeAny();
                 result = new JString(wordToken.Value);
-                if (_settings.AssignRawContent) result.RawContent = $"\"{wordToken.Value}\"";
+                if (Settings.AssignRawContent) result.RawContent = $"\"{wordToken.Value}\"";
                 break;
             case JTokenType.Num:
                 var numToken = ConsumeAny();
                 result = new JNumber(double.Parse(numToken.Value));
-                if (_settings.AssignRawContent) result.RawContent = numToken.Value;
+                if (Settings.AssignRawContent) result.RawContent = numToken.Value;
                 break;
             case JTokenType.Boolean:
                 var boolToken = ConsumeAny();
                 result = new JBoolean(bool.Parse(boolToken.Value));
-                if (_settings.AssignRawContent) result.RawContent = boolToken.Value.ToLower();
+                if (Settings.AssignRawContent) result.RawContent = boolToken.Value.ToLower();
                 break;
             case JTokenType.Null:
                 result = ParseNull();
@@ -113,7 +131,7 @@ public class JParser {
         // lambdas not allowed in switch :(((((
         ConsumeAny();
         var result = new JNull();
-        if (_settings.AssignRawContent) result.RawContent = "null";
+        if (Settings.AssignRawContent) result.RawContent = "null";
         return result;
     }
 
@@ -126,12 +144,12 @@ public class JParser {
         // Empty object
         if (Current?.Type == JTokenType.CurlCl) {
             Consume(JTokenType.CurlCl);
-            if (_settings.AssignRawContent) obj.RawContent = "{}";
+            if (Settings.AssignRawContent) obj.RawContent = "{}";
             return obj;
         }
 
         while (true) {
-            if (_settings.AllowTrailingCommas) {
+            if (Settings.AllowTrailingCommas) {
                 if (Current?.Type == JTokenType.CurlCl) {
                     Consume(JTokenType.CurlCl);
                     break;
@@ -163,7 +181,7 @@ public class JParser {
             throw new Exception($"Expected `,` or `}}` but got {Current} {Current?.Pos()}");
         }
 
-        if (_settings.AssignRawContent) {
+        if (Settings.AssignRawContent) {
             var pairs = obj.Fields.Select(kvp => $"\"{kvp.Key}\": {kvp.Value.RawContent}");
             obj.RawContent = "{" + string.Join(", ", pairs) + "}";
         }
@@ -180,12 +198,12 @@ public class JParser {
         // Empty array
         if (Current?.Type == JTokenType.SqCl) {
             Consume(JTokenType.SqCl);
-            if (_settings.AssignRawContent) arr.RawContent = "[]";
+            if (Settings.AssignRawContent) arr.RawContent = "[]";
             return arr;
         }
 
         while (true) {
-            if (_settings.AllowTrailingCommas) {
+            if (Settings.AllowTrailingCommas) {
                 if (Current?.Type == JTokenType.SqCl) {
                     Consume(JTokenType.SqCl);
                     break;
@@ -210,7 +228,7 @@ public class JParser {
             throw new Exception($"Expected `,` or `]` but got {Current} {Current?.Pos()}");
         }
 
-        if (_settings.AssignRawContent) {
+        if (Settings.AssignRawContent) {
             arr.RawContent = "[" + string.Join(", ", arr.Elements.Select(x => x.RawContent)) + "]";
         }
 
