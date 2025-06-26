@@ -13,7 +13,8 @@ public class JParser {
 
     public struct Settings {
         public bool AllowTrailingCommas = false;
-        public bool StoreRawContent = true;
+        public bool AssignRawContent = true;
+        public bool AssignParents = true;
         public Settings() { }
     }
 
@@ -38,12 +39,30 @@ public class JParser {
         return _tokens[_position++];
     }
 
-    // The functon to call to parse your json
+    private void ResolveParentHood(JValue root) {
+        if (root is JArray array) {
+            foreach (var x in array.Elements) {
+                x.Parent = root;
+                ResolveParentHood(x);
+            }
+        }
+
+        if (root is JObject obj) {
+            foreach (var x in obj.Fields) {
+                x.Value.Parent = root;
+                ResolveParentHood(x.Value);
+            }
+        }
+    }
+
+    // The function to call to parse your json
     public JValue Parse() {
         var result = ParseValue();
         if (_position < _tokens.Count) {
             throw new Exception($"Parsing did not complete: {Current} {Current?.Pos()}");
         }
+
+        if (_settings.AssignParents) ResolveParentHood(result);
 
         return result;
     }
@@ -62,17 +81,17 @@ public class JParser {
             case JTokenType.Word:
                 var wordToken = ConsumeAny();
                 result = new JString(wordToken.Value);
-                if (_settings.StoreRawContent) result.RawContent = $"\"{wordToken.Value}\"";
+                if (_settings.AssignRawContent) result.RawContent = $"\"{wordToken.Value}\"";
                 break;
             case JTokenType.Num:
                 var numToken = ConsumeAny();
                 result = new JNumber(double.Parse(numToken.Value));
-                if (_settings.StoreRawContent) result.RawContent = numToken.Value;
+                if (_settings.AssignRawContent) result.RawContent = numToken.Value;
                 break;
             case JTokenType.Boolean:
                 var boolToken = ConsumeAny();
                 result = new JBoolean(bool.Parse(boolToken.Value));
-                if (_settings.StoreRawContent) result.RawContent = boolToken.Value.ToLower();
+                if (_settings.AssignRawContent) result.RawContent = boolToken.Value.ToLower();
                 break;
             case JTokenType.Null:
                 result = ParseNull();
@@ -94,7 +113,7 @@ public class JParser {
         // lambdas not allowed in switch :(((((
         ConsumeAny();
         var result = new JNull();
-        if (_settings.StoreRawContent) result.RawContent = "null";
+        if (_settings.AssignRawContent) result.RawContent = "null";
         return result;
     }
 
@@ -107,13 +126,13 @@ public class JParser {
         // Empty object
         if (Current?.Type == JTokenType.CurlCl) {
             Consume(JTokenType.CurlCl);
-            if (_settings.StoreRawContent) obj.RawContent = "{}";
+            if (_settings.AssignRawContent) obj.RawContent = "{}";
             return obj;
         }
 
         while (true) {
-            if (Current?.Type == JTokenType.CurlCl) {
-                if (_settings.AllowTrailingCommas) {
+            if (_settings.AllowTrailingCommas) {
+                if (Current?.Type == JTokenType.CurlCl) {
                     Consume(JTokenType.CurlCl);
                     break;
                 }
@@ -144,7 +163,7 @@ public class JParser {
             throw new Exception($"Expected `,` or `}}` but got {Current} {Current?.Pos()}");
         }
 
-        if (_settings.StoreRawContent) {
+        if (_settings.AssignRawContent) {
             var pairs = obj.Fields.Select(kvp => $"\"{kvp.Key}\": {kvp.Value.RawContent}");
             obj.RawContent = "{" + string.Join(", ", pairs) + "}";
         }
@@ -161,13 +180,13 @@ public class JParser {
         // Empty array
         if (Current?.Type == JTokenType.SqCl) {
             Consume(JTokenType.SqCl);
-            if (_settings.StoreRawContent) arr.RawContent = "[]";
+            if (_settings.AssignRawContent) arr.RawContent = "[]";
             return arr;
         }
 
         while (true) {
-            if (Current?.Type == JTokenType.SqCl) {
-                if (_settings.AllowTrailingCommas) {
+            if (_settings.AllowTrailingCommas) {
+                if (Current?.Type == JTokenType.SqCl) {
                     Consume(JTokenType.SqCl);
                     break;
                 }
@@ -191,7 +210,7 @@ public class JParser {
             throw new Exception($"Expected `,` or `]` but got {Current} {Current?.Pos()}");
         }
 
-        if (_settings.StoreRawContent) {
+        if (_settings.AssignRawContent) {
             arr.RawContent = "[" + string.Join(", ", arr.Elements.Select(x => x.RawContent)) + "]";
         }
 

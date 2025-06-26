@@ -57,8 +57,8 @@ public class JLexer {
     }
 
     public static List<JToken> Lex(string content) {
-        int line = 0;
-        int col = 0;
+        int line = 1;
+        int col = 1;
 
         List<JToken> tokens = new() { new JToken(JTokenType.Whitespace, " ", line, col) };
 
@@ -186,6 +186,7 @@ public class JLexer {
                 UnquotedStringToType("null", JTokenType.Null, ref i, out con);
                 if (con) continue;
 
+                // Technically this should be a failure state
                 Console.Error.WriteLine($"Unexpected character '{c}' at {currentLine}:{currentCol}");
             }
         }

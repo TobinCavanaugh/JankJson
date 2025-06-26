@@ -5,6 +5,7 @@ namespace parseJson;
 public abstract class JValue {
     // TODO Make it include string content optionally
     public string? RawContent = null;
+    public JValue? Parent = null;
 
     public abstract override string ToString();
 

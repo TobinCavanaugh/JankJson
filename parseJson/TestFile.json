@@ -11,6 +11,7 @@
       "json"
     ]
   },
+  "empty": [],
   "rootObject": {
     "id": "ROOT-12345",
     "properties": {
