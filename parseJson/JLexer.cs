@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace parseJson;
 
 public enum JTokenType {
@@ -87,6 +89,14 @@ public class JLexer {
 
         number = new string(str.Slice(0, i));
         return i;
+    }
+
+    public static List<JToken> Lex(string content, ref Stopwatch sw) {
+        sw.Reset();
+        sw.Start();
+        var tokens = Lex(content);
+        sw.Stop();
+        return tokens;
     }
 
     public static List<JToken> Lex(string content) {

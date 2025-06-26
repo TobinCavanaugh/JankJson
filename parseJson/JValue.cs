@@ -1,4 +1,8 @@
+using System.Collections;
+
 namespace parseJson;
+
+//TODO REGULATE STRING ERRORS
 
 public abstract class JValue {
     // TODO Make it include string content optionally
@@ -6,6 +10,15 @@ public abstract class JValue {
     public JValue? Parent = null;
 
     public abstract override string ToString();
+
+    // Add convenience properties for type checking
+    public bool IsArray => this is JArray;
+    public bool IsObject => this is JObject;
+    public bool IsString => this is JString;
+    public bool IsNumber => this is JNumber;
+    public bool IsBoolean => this is JBoolean;
+    public bool IsNull => this is JNull;
+
 
     public virtual JValue this[string key] {
         get {
@@ -137,7 +150,8 @@ public class JNull : JValue {
     public override string ToString() => "null";
 }
 
-public class JObject : JValue {
+// Make JObject enumerable over its values
+public class JObject : JValue, IEnumerable<JValue> {
     public Dictionary<string, JValue> Fields;
 
     public JValue this[string ind] {
@@ -157,9 +171,24 @@ public class JObject : JValue {
         var pairs = Fields.Select(x => $"\"{x.Key}\": {x.Value}");
         return $"{{{string.Join(", ", pairs)}}}";
     }
+
+    // IEnumerable implementation - iterate over values
+    public IEnumerator<JValue> GetEnumerator() {
+        return Fields.Values.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() {
+        return GetEnumerator();
+    }
+
+    // Additional enumerable options
+    public IEnumerable<KeyValuePair<string, JValue>> Pairs => Fields;
+    public IEnumerable<string> Keys => Fields.Keys;
+    public IEnumerable<JValue> Values => Fields.Values;
 }
 
-public class JArray : JValue {
+// Make JArray enumerable
+public class JArray : JValue, IEnumerable<JValue> {
     public List<JValue> Elements;
 
     public JValue this[int ind] {
@@ -173,6 +202,15 @@ public class JArray : JValue {
 
     public override string ToString() {
         return $"[{String.Join(", ", Elements)}]";
+    }
+
+    // IEnumerable implementation
+    public IEnumerator<JValue> GetEnumerator() {
+        return Elements.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() {
+        return GetEnumerator();
     }
 }
 
@@ -216,5 +254,31 @@ public static class JValueExtensions {
 
     public static JNull AsJNull(this JValue value) {
         return value as JNull ?? throw new Exception($"Object `{value.GetHelpfulRef()}` is not a null");
+    }
+
+
+    // Recursive descendant traversal for deep LINQ queries
+    public static IEnumerable<JValue> Descendants(this JValue value) {
+        if (value is JObject obj) {
+            foreach (var field in obj.Fields.Values) {
+                yield return field;
+                foreach (var descendant in field.Descendants()) {
+                    yield return descendant;
+                }
+            }
+        }
+        else if (value is JArray arr) {
+            foreach (var element in arr.Elements) {
+                yield return element;
+                foreach (var descendant in element.Descendants()) {
+                    yield return descendant;
+                }
+            }
+        }
+    }
+
+    // Get all descendants of a specific type
+    public static IEnumerable<T> DescendantsOfType<T>(this JValue value) where T : JValue {
+        return value.Descendants().OfType<T>();
     }
 }

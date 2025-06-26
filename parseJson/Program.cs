@@ -3,16 +3,15 @@
 namespace parseJson;
 
 public class Program {
-    // TODO support empty arrays / objects
     // TODO support comments with settings option
     // Group unexpected character throws into one
+    // TODO Serializing and deserializing
 
     public static JObject ParseJson(string json, JParserSettings? settings = null) {
-        Stopwatch sw = new();
-        sw.Start();
+        //TODO improve this syntax here to be nice, probably using bool and out
 
-        var tokens = JLexer.Lex(json);
-        sw.Stop();
+        Stopwatch sw = new();
+        var tokens = JLexer.Lex(json, ref sw);
         Console.WriteLine($"Lexing took {sw.ElapsedMilliseconds} ms");
 
         var parser = new JParser(tokens, settings);
@@ -27,11 +26,7 @@ public class Program {
 
     static void Main(string[] args) {
         var obj = ParseJson(File.ReadAllText("TestFile.json"));
-        Console.WriteLine(obj);
-
-        // Console.WriteLine(obj["description"].AsString());
-        foreach (var name in (obj["rootObject"]["properties"]["numbers"].AsList<int>())) {
-            Console.WriteLine(name);
-        }
+        Console.WriteLine(obj["rootObject"]["id"].AsString());
+        Console.WriteLine(obj["rootObject"]["properties"]["enabled"].AsBoolean());
     }
 }
