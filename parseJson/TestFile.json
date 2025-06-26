@@ -1,5 +1,5 @@
 {
-  "description": "A complex test JSON file with deep nesting and varied structures",
+  "description": "A \"\"complex test \tJSON file with deep nesting and varied structures",
   "version": "1.0.0",
   "metadata": {
     "createdBy": "BlackboxAI",
@@ -17,6 +17,12 @@
     "properties": {
       "enabled": true,
       "priority": 99,
+      "numbers": [
+        123,
+        456,
+        789,
+        101
+      ],
       "references": [
         "REF-001",
         "REF-002",

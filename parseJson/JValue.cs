@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace parseJson;
 
 public abstract class JValue {
@@ -15,7 +13,7 @@ public abstract class JValue {
                 return obj.Fields[key];
             }
 
-            throw new Exception($"String indexer called on non JObject type: `{this.GetType()}`");
+            throw new Exception($"String indexer `{key}` called on non JObject type: `{this.GetType()}`");
         }
     }
 
@@ -161,9 +159,36 @@ public class JObject : JValue {
     }
 }
 
+public class JArray : JValue {
+    public List<JValue> Elements;
+
+    public JValue this[int ind] {
+        get => Elements[ind];
+        set => Elements[ind] = value;
+    }
+
+    public JArray() {
+        Elements = new();
+    }
+
+    public override string ToString() {
+        return $"[{String.Join(", ", Elements)}]";
+    }
+}
+
 public static class JValueExtensions {
     private static string GetHelpfulRef(this JValue value) {
         return $"{value.RawContent}";
+    }
+
+    public static List<T> AsList<T>(this JValue value) {
+        var l = value.AsJArray().Elements.Select(x => x.As<T>()).ToList();
+        return l;
+    }
+
+    public static T[] AsArray<T>(this JValue value) {
+        var l = value.AsJArray().Elements.Select(x => x.As<T>()).ToArray();
+        return l;
     }
 
     public static JArray AsJArray(this JValue value) {
@@ -191,24 +216,5 @@ public static class JValueExtensions {
 
     public static JNull AsJNull(this JValue value) {
         return value as JNull ?? throw new Exception($"Object `{value.GetHelpfulRef()}` is not a null");
-    }
-
-    // Additional methods for handling collections can be added here
-}
-
-public class JArray : JValue {
-    public List<JValue> Elements;
-
-    public JValue this[int ind] {
-        get => Elements[ind];
-        set => Elements[ind] = value;
-    }
-
-    public JArray() {
-        Elements = new();
-    }
-
-    public override string ToString() {
-        return $"[{String.Join(", ", Elements)}]";
     }
 }

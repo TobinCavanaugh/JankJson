@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace parseJson;
@@ -6,7 +7,7 @@ public static class StringExt {
     public static bool StartsWithInsensitive(this ReadOnlySpan<char> span, string str) {
         return span.CompareTo(str.AsSpan(str.Length), StringComparison.InvariantCultureIgnoreCase) == 0;
     }
-    
+
     public static string UnescapeString(string input) {
         if (string.IsNullOrEmpty(input)) return input;
 
@@ -52,7 +53,7 @@ public static class StringExt {
                         // Unicode escape sequence \uXXXX
                         if (i + 5 < input.Length) {
                             string hexCode = input.Substring(i + 2, 4);
-                            if (int.TryParse(hexCode, System.Globalization.NumberStyles.HexNumber, null,
+                            if (int.TryParse(hexCode, NumberStyles.HexNumber, null,
                                     out int unicodeValue)) {
                                 result.Append((char)unicodeValue);
                                 i += 5; // Skip \uXXXX

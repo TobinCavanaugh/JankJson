@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 namespace parseJson;
 
@@ -29,5 +28,10 @@ public class Program {
     static void Main(string[] args) {
         var obj = ParseJson(File.ReadAllText("TestFile.json"));
         Console.WriteLine(obj);
+
+        // Console.WriteLine(obj["description"].AsString());
+        foreach (var name in (obj["rootObject"]["properties"]["numbers"].AsList<int>())) {
+            Console.WriteLine(name);
+        }
     }
 }

@@ -1,21 +1,16 @@
-using System.Text;
-using System.Text.RegularExpressions;
-
 namespace parseJson;
 
 public enum JTokenType {
-    Whitespace,
-    Newline,
-    Word, // "..."
-    Num, // 1
-    Boolean, // false
-    Null,
-    Colon,
-    Comma,
-    CurlOp, //{
-    CurlCl, //}
-    SqOp, //[
-    SqCl, //]
+    // @formatter:off
+    Whitespace, Newline, Null, Colon, Comma,
+    Word,    /*  "..."  */
+    Num,     /*    1    */
+    Boolean, /*  false  */
+    CurlOp,  /*    {    */
+    CurlCl,  /*    }    */
+    SqOp,    /*    [    */
+    SqCl,    /*    ]    */
+    // @formatter:on
 }
 
 /// <summary>
@@ -44,19 +39,6 @@ public class JToken {
 }
 
 public class JLexer {
-    // Just does a regex match, will return "" if it fails, otherwise it will return the matched area
-    // static ReadOnlySpan<char> Match(string str, string regex) {
-    //     try {
-    //         // Making new string is stupid -_-
-    //         Match m = Regex.Match(str, regex);
-    //         if (m.Success) {
-    //             return m.Value;
-    //         }
-    //     }
-    //     catch (Exception e) { }
-    //
-    //     return "";
-    // }
     static int MatchNumber(ReadOnlySpan<char> str, out string number) {
         number = "";
         int i = 0;
@@ -157,12 +139,8 @@ public class JLexer {
                 if (c == '\\' && !escaped) {
                     escaped = true;
                     // Add the backslash to the current word
-                    if (prev.Type == JTokenType.Word) {
-                        prev.Value += c;
-                    }
-                    else {
-                        AddTokenHere(JTokenType.Word, c.ToString());
-                    }
+                    if (prev.Type == JTokenType.Word) prev.Value += c;
+                    else AddTokenHere(JTokenType.Word, c.ToString());
 
                     continue;
                 }
