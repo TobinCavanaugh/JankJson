@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Globalization;
 
-namespace parseJson;
+namespace JJson;
 
 //TODO REGULATE STRING ERRORS
 

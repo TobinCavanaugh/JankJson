@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace parseJson;
+namespace JJson;
 
 public struct JParserSettings {
     public bool AllowTrailingCommas = false;

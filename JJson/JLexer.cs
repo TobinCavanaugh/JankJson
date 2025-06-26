@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace parseJson;
+namespace JJson;
 
 public enum JTokenType {
     // @formatter:off

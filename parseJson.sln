@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parseJson", "parseJson\parseJson.csproj", "{C077DBB9-1D76-4BF1-8B8A-FFB248C072C4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JJson", "JJson\JJson.csproj", "{C077DBB9-1D76-4BF1-8B8A-FFB248C072C4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

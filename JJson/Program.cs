@@ -1,4 +1,4 @@
-﻿namespace parseJson;
+﻿namespace JJson;
 
 public class Program {
     // TODO support comments with settings option
@@ -6,14 +6,16 @@ public class Program {
     // TODO Serializing and deserializing
     static void Main(string[] args) {
         var obj = JJson.ParseJson(File.ReadAllText("TestFile.json"));
-        Console.WriteLine(obj["rootObject"]["id"].AsString());
-        Console.WriteLine(obj["rootObject"]["properties"]["enabled"].AsBoolean());
-
-        Console.WriteLine("---");
-
+        
         obj.Recurse(x => {
             if (x.IsLeaf) Console.WriteLine(x.ValueToString());
             return x.IsNode;
         });
+        
+        Console.WriteLine("---");
+        
+        Console.WriteLine(obj["rootObject"]["id"].AsString());
+        Console.WriteLine(obj["rootObject"]["properties"]["enabled"].AsBoolean());
+        Console.WriteLine(obj["rootObject"]["properties"]["numbers"].AsArray<int>().StringJoin(", "));
     }
 }

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace parseJson;
+namespace JJson;
 
 public static class JJson {
     public static JObject ParseJson(string json, JParserSettings? settings = null) {

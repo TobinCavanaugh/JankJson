@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace parseJson;
+namespace JJson;
 
 public static class StringExt {
     public static bool StartsWithInsensitive(this ReadOnlySpan<char> span, string str) {
