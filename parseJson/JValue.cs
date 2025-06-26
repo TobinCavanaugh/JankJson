@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Globalization;
 
 namespace parseJson;
 
@@ -19,6 +20,29 @@ public abstract class JValue {
     public bool IsBoolean => this is JBoolean;
     public bool IsNull => this is JNull;
 
+    public bool IsLeaf => IsNumber | IsBoolean | IsString | IsNull;
+    public bool IsNode => IsArray | IsObject;
+
+    public string ValueToString() {
+        if (IsNumber) {
+            return this.AsNumber().ToString(CultureInfo.InvariantCulture);
+        }
+
+        if (IsBoolean) {
+            return this.AsBoolean().ToString();
+        }
+
+        if (IsString) {
+            return this.AsString();
+        }
+
+        if (IsNull) {
+            return "null";
+        }
+        
+        throw new NotImplementedException("Nodes do not have values");
+        return "<UNSET>";
+    }
 
     public virtual JValue this[string key] {
         get {
@@ -280,5 +304,116 @@ public static class JValueExtensions {
     // Get all descendants of a specific type
     public static IEnumerable<T> DescendantsOfType<T>(this JValue value) where T : JValue {
         return value.Descendants().OfType<T>();
+    }
+
+// Add this to your JValueExtensions class
+
+    /// <summary>
+    /// Recursively traverses the JSON structure, applying a function to each node
+    /// </summary>
+    /// <param name="action">Function to apply to each JValue. Return true to continue recursion into children, false to skip.</param>
+    public static void Recurse(this JValue value, Func<JValue, bool> action) {
+        if (!action(value)) return;
+
+        if (value is JObject obj) {
+            foreach (var field in obj.Fields.Values) {
+                field.Recurse(action);
+            }
+        }
+        else if (value is JArray arr) {
+            foreach (var element in arr.Elements) {
+                element.Recurse(action);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Recursively traverses the JSON structure, applying a function to each node with path context
+    /// </summary>
+    /// <param name="action">Function to apply to each JValue with its path. Return true to continue recursion, false to skip.</param>
+    public static void Recurse(this JValue value, Func<JValue, string[], bool> action) {
+        RecurseInternal(value, action, new string[0]);
+    }
+
+    private static void RecurseInternal(JValue value, Func<JValue, string[], bool> action, string[] currentPath) {
+        if (!action(value, currentPath)) return;
+
+        if (value is JObject obj) {
+            foreach (var kvp in obj.Fields) {
+                var newPath = currentPath.Concat(new[] { kvp.Key }).ToArray();
+                RecurseInternal(kvp.Value, action, newPath);
+            }
+        }
+        else if (value is JArray arr) {
+            for (int i = 0; i < arr.Elements.Count; i++) {
+                var newPath = currentPath.Concat(new[] { i.ToString() }).ToArray();
+                RecurseInternal(arr.Elements[i], action, newPath);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Recursively traverses and transforms the JSON structure
+    /// </summary>
+    /// <param name="transform">Function that transforms each JValue</param>
+    /// <returns>New JValue with transformations applied</returns>
+    public static JValue RecurseTransform(this JValue value, Func<JValue, JValue> transform) {
+        var transformed = transform(value);
+
+        if (transformed is JObject obj) {
+            var newObj = new JObject();
+            foreach (var kvp in obj.Fields) {
+                newObj.Fields[kvp.Key] = kvp.Value.RecurseTransform(transform);
+            }
+
+            return newObj;
+        }
+        else if (transformed is JArray arr) {
+            var newArr = new JArray();
+            foreach (var element in arr.Elements) {
+                newArr.Elements.Add(element.RecurseTransform(transform));
+            }
+
+            return newArr;
+        }
+
+        return transformed;
+    }
+
+    /// <summary>
+    /// Recursively collects values that match a predicate
+    /// </summary>
+    /// <param name="predicate">Function to test each JValue</param>
+    /// <returns>Collection of matching JValues</returns>
+    public static IEnumerable<JValue> RecurseWhere(this JValue value, Func<JValue, bool> predicate) {
+        var results = new List<JValue>();
+
+        value.Recurse(v => {
+            if (predicate(v))
+                results.Add(v);
+            return true; // Always continue recursion
+        });
+
+        return results;
+    }
+
+    /// <summary>
+    /// Recursively finds the first value that matches a predicate
+    /// </summary>
+    /// <param name="predicate">Function to test each JValue</param>
+    /// <returns>First matching JValue or null if none found</returns>
+    public static JValue? RecurseFirst(this JValue value, Func<JValue, bool> predicate) {
+        JValue? found = null;
+
+        value.Recurse(v => {
+            if (predicate(v)) {
+                found = v;
+                return false; // Stop recursion
+            }
+
+            return true; // Continue recursion
+        });
+
+        return found;
     }
 }
