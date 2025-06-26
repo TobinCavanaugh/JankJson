@@ -5,9 +5,9 @@
     "createdBy": "BlackboxAI",
     "creationDate": "2023-11-15",
     "tags": [
-      "test",
-      "deep",
-      "complex",
+      "\\test",
+      "\tdeep",
+      "\"complex",
       "json"
     ]
   },

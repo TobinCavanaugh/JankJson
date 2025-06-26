@@ -67,7 +67,6 @@ public class Program {
         bool inQuotes = false;
         bool escaped = false;
 
-
         for (int i = 0; i < content.Length; i++) {
             var c = content[i];
             var rem = content.Substring(i);
@@ -76,14 +75,6 @@ public class Program {
             // Track current position before processing character
             int currentLine = line;
             int currentCol = col;
-
-            // Handle newlines first (before incrementing col)
-            if (!inQuotes && c == '\n') {
-                tokens.Add(new JToken(JTokenType.Newline, "\n", currentLine, currentCol));
-                ++line;
-                col = 0;
-                continue;
-            }
 
             col++;
 
@@ -112,10 +103,40 @@ public class Program {
                 }
             }
 
-            // If we're entering / exiting a quote
-            if (!escaped) {
+            if (inQuotes) {
+                if (c == '\\' && !escaped) {
+                    escaped = true;
+                    // Add the backslash to the current word
+                    if (prev.Type == JTokenType.Word) {
+                        prev.Value += c;
+                    }
+                    else {
+                        AddTokenHere(JTokenType.Word, c.ToString());
+                    }
+
+                    continue;
+                }
+
+                // If we're entering / exiting a quote
+                if (c == '"' && !escaped) {
+                    inQuotes = false;
+                    // Process escape sequences in the completed string
+                    if (prev.Type == JTokenType.Word) {
+                        prev.Value = StringExt.UnescapeString(prev.Value);
+                    }
+
+                    continue;
+                }
+
+                // Reset escaped flag after processing any character following a backslash
+                if (escaped) {
+                    escaped = false;
+                }
+            }
+            else {
+                // If we're entering a quote
                 if (c == '"') {
-                    inQuotes = !inQuotes;
+                    inQuotes = true;
                     continue;
                 }
             }
@@ -202,25 +223,23 @@ public class Program {
             }
         }
 
-        // Maybe should be explicit?? Also should maybe use As... though throwing on implicit conversions is sus
-        public static implicit operator string(JValue value) {
+        // Should maybe use As... 
+        public static explicit operator string(JValue value) {
             return value.As<string>() ?? "";
             // return value is JString jstr ? jstr.Value : "";
         }
 
-        public static implicit operator double(JValue value) {
+        public static explicit operator double(JValue value) {
             return value is JNumber jnum ? jnum.Value : 0.0;
         }
 
-        public static implicit operator bool(JValue value) {
+        public static explicit operator bool(JValue value) {
             return value is JBoolean jbool ? jbool.Value : false;
         }
 
-        public static implicit operator int(JValue value) {
+        public static explicit operator int(JValue value) {
             return value is JNumber jnum ? (int)jnum.Value : 0;
         }
-
-        // public bool Exists => !(this is JNull);
 
         /// <summary> Takes a path, returns true if a value exists there and passes it via the out param </summary>
         /// <param name="value"></param>
@@ -348,7 +367,7 @@ public class Program {
             Value = value;
         }
 
-        public override string ToString() => $"\"{Value}\"";
+        public override string ToString() => $"\"{StringExt.EscapeString(Value)}\"";
     }
 
     public class JNumber : JValue {
@@ -585,8 +604,12 @@ public class Program {
         sw.Stop();
         tokens.ForEach(x => Console.Write($"{x}\n"));
         Console.WriteLine($"Lexing and parsing took {sw.ElapsedMilliseconds} ms");
-        
+
         jsonVal["rootObject"]["properties"]["references"].As<List<string>>().ForEach(Console.WriteLine);
+
+        Console.WriteLine(jsonVal.ToString());
+        
+        File.WriteAllText("../../../TestFile-GENERATED.json", jsonVal.ToString());
 
         // if (jsonVal.TryGet(out var v, "rootObject", "properties", "references")) {
         //     v.As<JArray>().Elements.Add(new JString("REF-004"));
