@@ -173,6 +173,11 @@ if (json["user"].IsObject) {
 if (json["value"].IsLeaf) {
     var stringValue = json["value"].ValueToString();
 }
+
+// Check for Nodes (Array / Object)
+if (json["value"].IsNode) {
+    var stringValue = json["value"].ToString();
+}
 ```
 
 ## Error Handling
