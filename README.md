@@ -1,6 +1,5 @@
 # JankJson (JJson)
-
-A lightweight, intuitive JSON manipulation library for C# that prioritizes simplicity and ease of use. JankJson provides a clean API for parsing, querying, and transforming JSON data without the overhead of complex configuration or verbose syntax.
+Simple Json parsing for C#. Intuitive syntax and Linq-queryable.
 
 ## Features
 
