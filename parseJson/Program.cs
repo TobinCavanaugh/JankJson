@@ -561,7 +561,7 @@ public class Program {
                     continue;
                 }
 
-                throw new Exception($"Expected `,` or `}}}}` but got {Current} {Current?.Pos()}");
+                throw new Exception($"Expected `,` or `]` but got {Current} {Current?.Pos()}");
             }
 
             return arr;
@@ -585,11 +585,13 @@ public class Program {
         sw.Stop();
         tokens.ForEach(x => Console.Write($"{x}\n"));
         Console.WriteLine($"Lexing and parsing took {sw.ElapsedMilliseconds} ms");
+        
+        jsonVal["rootObject"]["properties"]["references"].As<List<string>>().ForEach(Console.WriteLine);
 
-        if (jsonVal.TryGet(out var v, "rootObject", "properties", "references")) {
-            v.As<JArray>().Elements.Add(new JString("REF-004"));
-            Console.WriteLine(String.Join(", ", v.As<List<string>>()));
-        }
+        // if (jsonVal.TryGet(out var v, "rootObject", "properties", "references")) {
+        //     v.As<JArray>().Elements.Add(new JString("REF-004"));
+        //     Console.WriteLine(String.Join(", ", v.As<List<string>>()));
+        // }
 
         // Console.WriteLine(jsonVal.ToString());
     }
