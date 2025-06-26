@@ -11,7 +11,10 @@ public struct JParserSettings {
 
     public override string ToString() {
         return
-            $"{nameof(AllowTrailingCommas)}:{AllowTrailingCommas}, {nameof(AssignRawContent)}:{AssignRawContent}, {nameof(AssignParents)}:{AssignParents}, {nameof(MeasureParseTime)}:{MeasureParseTime}";
+            $"{nameof(AllowTrailingCommas)}:{AllowTrailingCommas}, " +
+            $"{nameof(AssignRawContent)}:{AssignRawContent}, " +
+            $"{nameof(AssignParents)}:{AssignParents}, " +
+            $"{nameof(MeasureParseTime)}:{MeasureParseTime}";
     }
 }
 

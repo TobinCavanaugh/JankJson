@@ -2,7 +2,11 @@ using System.Text;
 
 namespace parseJson;
 
-public class StringExt {
+public static class StringExt {
+    public static bool StartsWithInsensitive(this ReadOnlySpan<char> span, string str) {
+        return span.CompareTo(str.AsSpan(str.Length), StringComparison.InvariantCultureIgnoreCase) == 0;
+    }
+    
     public static string UnescapeString(string input) {
         if (string.IsNullOrEmpty(input)) return input;
 

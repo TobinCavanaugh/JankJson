@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace parseJson;
@@ -44,16 +45,66 @@ public class JToken {
 
 public class JLexer {
     // Just does a regex match, will return "" if it fails, otherwise it will return the matched area
-    static string Match(string str, string regex) {
-        try {
-            Match m = Regex.Match(str, regex);
-            if (m.Success) {
-                return m.Value;
+    // static ReadOnlySpan<char> Match(string str, string regex) {
+    //     try {
+    //         // Making new string is stupid -_-
+    //         Match m = Regex.Match(str, regex);
+    //         if (m.Success) {
+    //             return m.Value;
+    //         }
+    //     }
+    //     catch (Exception e) { }
+    //
+    //     return "";
+    // }
+    static int MatchNumber(ReadOnlySpan<char> str, out string number) {
+        number = "";
+        int i = 0;
+
+        if (i >= str.Length) return 0;
+
+        // Optional minus sign
+        if (str[i] == '-') {
+            i++;
+        }
+
+        if (i >= str.Length || !char.IsDigit(str[i])) return 0;
+
+        // Integer part
+        if (str[i] == '0') {
+            i++; // Just zero
+        }
+        else {
+            // 1-9 followed by digits
+            while (i < str.Length && char.IsDigit(str[i])) {
+                i++;
             }
         }
-        catch (Exception e) { }
 
-        return "";
+        // Optional fractional part
+        if (i < str.Length && str[i] == '.') {
+            i++;
+            if (i >= str.Length || !char.IsDigit(str[i])) return 0; // Must have digit after decimal
+            while (i < str.Length && char.IsDigit(str[i])) {
+                i++;
+            }
+        }
+
+        // Optional exponent part
+        if (i < str.Length && (str[i] == 'e' || str[i] == 'E')) {
+            i++;
+            if (i < str.Length && (str[i] == '+' || str[i] == '-')) {
+                i++;
+            }
+
+            if (i >= str.Length || !char.IsDigit(str[i])) return 0; // Must have digit after exponent
+            while (i < str.Length && char.IsDigit(str[i])) {
+                i++;
+            }
+        }
+
+        number = new string(str.Slice(0, i));
+        return i;
     }
 
     public static List<JToken> Lex(string content) {
@@ -67,7 +118,7 @@ public class JLexer {
 
         for (int i = 0; i < content.Length; i++) {
             var c = content[i];
-            var rem = content.Substring(i);
+            var rem = content.AsSpan(i);
             var prev = tokens[^1];
 
             // Track current position before processing character
@@ -151,20 +202,23 @@ public class JLexer {
             }
             else {
                 { // Num
-                    string num = Match(rem, "-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][-+]?[0-9]+)?");
+                    // string num = Match(rem, "-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][-+]?[0-9]+)?");
+                    // var num = Match(rem, "");
 
-                    // If we found a num
-                    if (num != "" && rem.StartsWith(num)) {
-                        AddTokenHere(JTokenType.Num, num);
-                        i += num.Length - 1;
-                        col += num.Length - 1;
+                    // Try to match number
+                    int numLength = MatchNumber(rem, out string number);
+                    if (numLength > 0) {
+                        AddTokenHere(JTokenType.Num, number);
+                        i += numLength - 1;
+                        col += numLength - 1;
                         continue;
                     }
                 }
 
                 // Handles stuff like false, true, null
-                var UnquotedStringToType = (string match, JTokenType type, ref int ind, out bool shouldContinue) => {
-                    if (rem.StartsWith(match, StringComparison.OrdinalIgnoreCase)) {
+                var UnquotedStringToType = (ReadOnlySpan<char> _rem, string match, JTokenType type, ref int ind,
+                    out bool shouldContinue) => {
+                    if (_rem.StartsWith(match, StringComparison.OrdinalIgnoreCase)) {
                         AddTokenHere(type, match);
                         ind += match.Length - 1;
                         col += match.Length - 1;
@@ -177,13 +231,13 @@ public class JLexer {
 
                 bool con = false;
 
-                UnquotedStringToType("false", JTokenType.Boolean, ref i, out con);
+                UnquotedStringToType(rem, "false", JTokenType.Boolean, ref i, out con);
                 if (con) continue;
 
-                UnquotedStringToType("true", JTokenType.Boolean, ref i, out con);
+                UnquotedStringToType(rem, "true", JTokenType.Boolean, ref i, out con);
                 if (con) continue;
 
-                UnquotedStringToType("null", JTokenType.Null, ref i, out con);
+                UnquotedStringToType(rem, "null", JTokenType.Null, ref i, out con);
                 if (con) continue;
 
                 // Technically this should be a failure state
