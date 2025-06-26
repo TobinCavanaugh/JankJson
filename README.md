@@ -236,13 +236,4 @@ var allNumbers = config.DescendantsOfType<JNumber>()
 ```
 
 ## Installation
-
-Add JankJson to your project and start parsing JSON with minimal setup required.
-
-## License
-
-[License information here]
-
-## Contributing
-
-Contributions are welcome. Please ensure all changes maintain the library's focus on simplicity and ease of use.
+Not currently released
