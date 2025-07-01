@@ -19,6 +19,9 @@ public struct JParserSettings {
 }
 
 public class JParser {
+    //TODO Parsing floats is slow, we could probably asynciy that portion of the code by 
+    //TODO Potentially lazy loading the json could be sick for _huge_ json files. 
+
     private readonly List<JToken> _tokens;
     private int _position = 0;
     public readonly JParserSettings Settings;
@@ -88,15 +91,15 @@ public class JParser {
         return result;
     }
 
-    delegate JValue JAnon(Action<JToken> token);
     // Called recursively within parsenull, parseobject, parsearray
-
     private JValue ParseValue() {
         if (Current == null) {
             throw new Exception($"Unexpected end of stream {Current?.Pos()}");
         }
 
         JValue result;
+
+        List<Task> tasks = new();
 
         switch (Current.Type) {
             case JTokenType.Word:
@@ -106,13 +109,15 @@ public class JParser {
                 break;
             case JTokenType.Num:
                 var numToken = ConsumeAny();
-                result = new JNumber(double.Parse(numToken.Value));
+                result = new JNumber(0);
+                var end = Task.Run(() => { (result as JNumber).Value = double.Parse(numToken.Value); });
+                tasks.Add(end);
                 if (Settings.AssignRawContent) result.RawContent = numToken.Value;
                 break;
             case JTokenType.Boolean:
                 var boolToken = ConsumeAny();
                 result = new JBoolean(bool.Parse(boolToken.Value));
-                if (Settings.AssignRawContent) result.RawContent = boolToken.Value.ToLower();
+                if (Settings.AssignRawContent) result.RawContent = boolToken.Value;
                 break;
             case JTokenType.Null:
                 result = ParseNull();
@@ -127,6 +132,8 @@ public class JParser {
                 throw new Exception($"Unexpected token {Current} {Current?.Pos()}");
         }
 
+
+        Task.WaitAny(tasks.ToArray());
         return result;
     }
 
@@ -152,8 +159,8 @@ public class JParser {
         }
 
         while (true) {
-            if (Settings.AllowTrailingCommas) {
-                if (Current?.Type == JTokenType.CurlCl) {
+            if (Current?.Type == JTokenType.CurlCl) {
+                if (Settings.AllowTrailingCommas) {
                     Consume(JTokenType.CurlCl);
                     break;
                 }
@@ -206,8 +213,8 @@ public class JParser {
         }
 
         while (true) {
-            if (Settings.AllowTrailingCommas) {
-                if (Current?.Type == JTokenType.SqCl) {
+            if (Current?.Type == JTokenType.SqCl) {
+                if (Settings.AllowTrailingCommas) {
                     Consume(JTokenType.SqCl);
                     break;
                 }

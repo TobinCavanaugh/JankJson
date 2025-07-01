@@ -22,11 +22,18 @@ public class JToken {
     public JTokenType Type;
     public string Value;
 
-    public int Row, Column;
+    public readonly int Row, Column;
 
     public JToken(JTokenType type, string value, int row, int column) {
         Type = type;
         Value = value;
+        Row = row;
+        Column = column;
+    }
+
+    public JToken(JTokenType type, ReadOnlySpan<char> value, int row, int column) {
+        Type = type;
+        Value = value.ToString();
         Row = row;
         Column = column;
     }
@@ -190,9 +197,6 @@ public class JLexer {
             }
             else {
                 { // Num
-                    // string num = Match(rem, "-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][-+]?[0-9]+)?");
-                    // var num = Match(rem, "");
-
                     // Try to match number
                     int numLength = MatchNumber(rem, out string number);
                     if (numLength > 0) {

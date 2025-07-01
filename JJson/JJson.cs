@@ -7,15 +7,23 @@ public static class JJson {
         //TODO improve this syntax here to be nice, probably using bool and out
 
         Stopwatch sw = new();
+        sw.Start();
+        
         var tokens = JLexer.Lex(json, ref sw);
-        // Console.WriteLine($"Lexing took {sw.ElapsedMilliseconds} ms");
-
+        // var tokens = OptimizedParallelLexer.Lex(json);
+        
+        sw.Stop();
+        
+        Console.WriteLine($"Lexing took {sw.ElapsedMilliseconds} ms");
+        // tokens.ForEach(Console.WriteLine);
+        
         var parser = new JParser(tokens, settings);
         var obj = (parser.Parse() as JObject) ?? throw new Exception("Failed to parse json");
-
-        if (parser.Settings.MeasureParseTime) {
-            // Console.WriteLine($"Parsing took {parser.Stopwatch!.ElapsedMilliseconds} ms");
-        }
+        Console.WriteLine($"Parsing took {parser.Stopwatch.ElapsedMilliseconds}ms");
+        //
+        // if (parser.Settings.MeasureParseTime) {
+        //     // Console.WriteLine($"Parsing took {parser.Stopwatch!.ElapsedMilliseconds} ms");
+        // }
 
         return obj;
     }

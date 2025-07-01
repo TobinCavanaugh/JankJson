@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace JJson;
 
@@ -9,7 +10,22 @@ public static class StringExt {
     }
 
     public static string UnescapeString(string input) {
-        if (string.IsNullOrEmpty(input)) return input;
+        return UnescapeString(input.AsSpan()).ToString();
+    }
+
+    public static string UnescapeString(StringBuilder sb) {
+        StringBuilder ironic = new(sb.Length);
+        foreach (var chunk in sb.GetChunks()) {
+            ironic.Append(UnescapeString(chunk.Span));
+        }
+
+        return ironic.ToString();
+    }
+
+    public static ReadOnlySpan<char> UnescapeString(ReadOnlySpan<char> input) {
+        // return Regex.Unescape(input);
+        // if (string.IsNullOrEmpty(input)) return "";
+        if (input.IsEmpty) return "";
 
         var result = new StringBuilder();
 
@@ -52,7 +68,8 @@ public static class StringExt {
                     case 'u':
                         // Unicode escape sequence \uXXXX
                         if (i + 5 < input.Length) {
-                            string hexCode = input.Substring(i + 2, 4);
+                            // string hexCode = input.Substring(i + 2, 4);
+                            var hexCode = input.Slice(i + 2, 4);
                             if (int.TryParse(hexCode, NumberStyles.HexNumber, null,
                                     out int unicodeValue)) {
                                 result.Append((char)unicodeValue);
@@ -84,6 +101,7 @@ public static class StringExt {
     }
 
     public static string EscapeString(string input) {
+        // return Regex.Escape(input);
         if (string.IsNullOrEmpty(input)) return input;
 
         var result = new StringBuilder();
