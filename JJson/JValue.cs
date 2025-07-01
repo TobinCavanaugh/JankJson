@@ -23,6 +23,14 @@ public abstract class JValue {
     public bool IsLeaf => IsNumber | IsBoolean | IsString | IsNull;
     public bool IsNode => IsArray | IsObject;
 
+    public List<JValue> Children => IsArray
+        ? (this.AsJArray().Elements)
+        : (this.IsObject
+            ? (this.AsJObject().Fields.Select(x => x.Value).ToList())
+            : throw new TypeAccessException($"This JValue is not a JArray or JObject, so it has no Children.\n" +
+                                            $"IsArray: {IsArray}, IsObject: {IsObject}, IsString: {IsString}, IsNumber: {IsNumber}, IsBoolean: {IsBoolean}, IsNull: {IsNull}\n" +
+                                            $"RawContent: `{this.RawContent}`"));
+
     public string ValueToString() {
         if (IsNumber) {
             return this.AsNumber().ToString(CultureInfo.InvariantCulture);
@@ -39,7 +47,7 @@ public abstract class JValue {
         if (IsNull) {
             return "null";
         }
-        
+
         throw new NotImplementedException("Nodes do not have values");
         return "<UNSET>";
     }
@@ -237,4 +245,3 @@ public class JArray : JValue, IEnumerable<JValue> {
         return GetEnumerator();
     }
 }
-

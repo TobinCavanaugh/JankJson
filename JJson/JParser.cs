@@ -91,6 +91,32 @@ public class JParser {
         return result;
     }
 
+    //TODO Parse Exception type
+
+    private JValue ParseNumber() {
+        var numToken = ConsumeAny();
+        try {
+            var result = new JNumber(double.Parse(numToken.Value));
+            if (Settings.AssignRawContent) result.RawContent = numToken.Value;
+            return result;
+        }
+        catch (Exception ex) {
+            throw new FormatException($"Failed to parse as double at {numToken}:{numToken?.Pos()}");
+        }
+    }
+
+    private JValue ParseBoolean() {
+        var boolToken = ConsumeAny();
+        try {
+            var result = new JBoolean(bool.Parse(boolToken.Value));
+            if (Settings.AssignRawContent) result.RawContent = boolToken.Value;
+            return result;
+        }
+        catch (Exception ex) {
+            throw new FormatException($"Failed to parse as bool at {boolToken}:{boolToken?.Pos()}");
+        }
+    }
+
     // Called recursively within parsenull, parseobject, parsearray
     private JValue ParseValue() {
         if (Current == null) {
@@ -99,7 +125,7 @@ public class JParser {
 
         JValue result;
 
-        List<Task> tasks = new();
+        // List<Task> tasks = new();
 
         switch (Current.Type) {
             case JTokenType.Word:
@@ -108,16 +134,10 @@ public class JParser {
                 if (Settings.AssignRawContent) result.RawContent = $"\"{wordToken.Value}\"";
                 break;
             case JTokenType.Num:
-                var numToken = ConsumeAny();
-                result = new JNumber(0);
-                var end = Task.Run(() => { (result as JNumber).Value = double.Parse(numToken.Value); });
-                tasks.Add(end);
-                if (Settings.AssignRawContent) result.RawContent = numToken.Value;
+                result = ParseNumber();
                 break;
             case JTokenType.Boolean:
-                var boolToken = ConsumeAny();
-                result = new JBoolean(bool.Parse(boolToken.Value));
-                if (Settings.AssignRawContent) result.RawContent = boolToken.Value;
+                result = ParseBoolean();
                 break;
             case JTokenType.Null:
                 result = ParseNull();
@@ -133,7 +153,9 @@ public class JParser {
         }
 
 
-        Task.WaitAny(tasks.ToArray());
+        // if (tasks.Count > 0) {
+        // Task.WaitAny(tasks.ToArray());
+        // }
         return result;
     }
 

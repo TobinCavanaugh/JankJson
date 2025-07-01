@@ -237,8 +237,8 @@ public class JLexer {
                 UnquotedStringToType(rem, "null", JTokenType.Null, ref i, out con);
                 if (con) continue;
 
-                // Technically this should be a failure state
-                Console.Error.WriteLine($"Unexpected character '{c}' at {currentLine}:{currentCol}");
+                throw new Exception($"Unexpected character '{c}' at {currentLine}:{col}");
+                // Console.Error.WriteLine($"Unexpected character '{c}' at {currentLine}:{currentCol}");
             }
         }
 
