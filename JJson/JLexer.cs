@@ -110,7 +110,7 @@ public class JLexer {
         int line = 1;
         int col = 1;
 
-        List<JToken> tokens = new() { new JToken(JTokenType.Whitespace, " ", line, col) };
+        List<JToken> tokens = new() { new JToken(JTokenType.Whitespace, "", line, col) };
 
         bool inQuotes = false;
         bool escaped = false;
@@ -169,6 +169,10 @@ public class JLexer {
                     if (prev.Type == JTokenType.Word) {
                         prev.Value = StringExt.UnescapeString(prev.Value);
                     }
+                    else {
+                        // Fix empty strings breaking
+                        AddTokenHere(JTokenType.Word, "");
+                    }
 
                     continue;
                 }
@@ -196,7 +200,8 @@ public class JLexer {
                 AddTokenHere(JTokenType.Word, c.ToString());
             }
             else {
-                { // Num
+                {
+                    // Num
                     // Try to match number
                     int numLength = MatchNumber(rem, out string number);
                     if (numLength > 0) {
